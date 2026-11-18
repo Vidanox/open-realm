@@ -50,7 +50,10 @@ jobs:
           set -euo pipefail
           make BUILD=release MSAA=${{ inputs.msaa }} FFMPEG=${{ inputs.ffmpeg }} build
           if [ "${{ inputs.ffmpeg }}" = "1" ]; then
-            ldd build/bin/openwarcraft3.exe | grep -i -E 'libav(codec|format)|libsw(scale|resample)'
+            echo "== DLL imports (libav/libsw) =="
+            objdump -p build/bin/openwarcraft3.exe | grep -i -E 'DLL Name:.*(libav|libsw)' || echo "none found"
+            echo "== ldd (libav/libsw) =="
+            ldd build/bin/openwarcraft3.exe | grep -i -E 'libav|libsw' || echo "none found"
             if grep -aq "playback is disabled in this build" build/bin/openwarcraft3.exe; then
               echo "FFmpeg was not compiled into the binary" >&2
               exit 1
