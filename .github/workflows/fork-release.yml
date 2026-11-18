@@ -4,14 +4,19 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release tag to create (e.g. v0.0.13-alpha-msaa8)'
+        description: 'Release tag to create'
         required: true
-        default: 'v0.0.13-alpha-msaa8'
+        default: 'v0.0.14-alpha-msaa8-ffmpeg'
       msaa:
         description: 'MSAA sample count (fixed at build time; 0 disables)'
         type: choice
         options: ['0', '2', '4', '8']
         default: '8'
+      ffmpeg:
+        description: 'FFmpeg media backend (movies + compressed music)'
+        type: choice
+        options: ['0', '1']
+        default: '1'
 
 permissions:
   contents: write
@@ -32,6 +37,8 @@ jobs:
             mingw-w64-x86_64-SDL2
             mingw-w64-x86_64-libepoxy
             mingw-w64-x86_64-zlib
+            mingw-w64-x86_64-ffmpeg
+            mingw-w64-x86_64-pkgconf
             mingw-w64-x86_64-python
             make
             zip
@@ -39,23 +46,43 @@ jobs:
 
       - name: Build (Windows release, EOS disabled)
         shell: msys2 {0}
-        run: make BUILD=release MSAA=${{ inputs.msaa }} build
+        run: |
+          set -euo pipefail
+          make BUILD=release MSAA=${{ inputs.msaa }} FFMPEG=${{ inputs.ffmpeg }} build
+          if [ "${{ inputs.ffmpeg }}" = "1" ]; then
+            ldd build/bin/openwarcraft3.exe | grep -i -E 'libav(codec|format)|libsw(scale|resample)'
+            if grep -aq "playback is disabled in this build" build/bin/openwarcraft3.exe; then
+              echo "FFmpeg was not compiled into the binary" >&2
+              exit 1
+            fi
+          fi
 
       - name: Package release archive
         shell: msys2 {0}
         run: |
+          set -euo pipefail
           mkdir -p release
           cp build/bin/openwarcraft3.exe release/
           cp -r build/lib/. release/
           cp -r build/share release/
           bash dist-scripts/windows/bundle_mingw_dlls.sh release \
             build/bin/openwarcraft3.exe build/lib/*.dll
+          # FFmpeg's own DLLs pull in a large transitive closure; grow it to a fixed point.
+          for i in 1 2 3 4 5 6 7 8; do
+            before=$(ls release/*.dll | wc -l)
+            bash dist-scripts/windows/bundle_mingw_dlls.sh release release/*.dll build/bin/openwarcraft3.exe
+            after=$(ls release/*.dll | wc -l)
+            [ "$before" = "$after" ] && break
+          done
+          if [ "${{ inputs.ffmpeg }}" = "1" ]; then
+            ls release/libavcodec-*.dll release/libavformat-*.dll >/dev/null
+          fi
           cd release && zip -r ../openwarcraft3-windows-x64.zip .
 
       - name: Upload CI artifact
         uses: actions/upload-artifact@v4
         with:
-          name: openwarcraft3-windows-x64-msaa${{ inputs.msaa }}
+          name: openwarcraft3-windows-x64-msaa${{ inputs.msaa }}-ffmpeg${{ inputs.ffmpeg }}
           path: openwarcraft3-windows-x64.zip
 
       - name: Publish GitHub release
@@ -66,5 +93,5 @@ jobs:
           gh release create "${{ inputs.tag }}" openwarcraft3-windows-x64.zip \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
-            --title "OpenRealm ${{ inputs.tag }} (fork build, MSAA=${{ inputs.msaa }})" \
-            --notes "Windows x64 release build from this fork. MSAA=${{ inputs.msaa }} (fixed at build time). EOS/online services disabled; single-player and LAN supported."
+            --title "OpenRealm ${{ inputs.tag }} (fork build, MSAA=${{ inputs.msaa }}, FFmpeg=${{ inputs.ffmpeg }})" \
+            --notes "Windows x64 release build from this fork. MSAA=${{ inputs.msaa }} (fixed at build time). FFmpeg=${{ inputs.ffmpeg }} (pre-rendered movies and compressed background music). EOS/online services disabled; single-player and LAN supported. Bundled FFmpeg runtime is LGPL/GPL from MSYS2."
