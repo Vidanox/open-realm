@@ -51,9 +51,9 @@ jobs:
           make BUILD=release MSAA=${{ inputs.msaa }} FFMPEG=${{ inputs.ffmpeg }} build
           if [ "${{ inputs.ffmpeg }}" = "1" ]; then
             echo "== DLL imports (libav/libsw) =="
-            objdump -p build/bin/openwarcraft3.exe | grep -i -E 'DLL Name:.*(libav|libsw)' || echo "none found"
+            objdump -p build/bin/openwarcraft3.exe | grep -i -E 'DLL Name:.*(avcodec|avformat|avutil|swscale|swresample)' || echo "none found"
             echo "== ldd (libav/libsw) =="
-            ldd build/bin/openwarcraft3.exe | grep -i -E 'libav|libsw' || echo "none found"
+            ldd build/bin/openwarcraft3.exe | grep -i -E 'avcodec|avformat|avutil|swscale|swresample' || echo "none found"
             if grep -aq "playback is disabled in this build" build/bin/openwarcraft3.exe; then
               echo "FFmpeg was not compiled into the binary" >&2
               exit 1
@@ -78,7 +78,7 @@ jobs:
             [ "$before" = "$after" ] && break
           done
           if [ "${{ inputs.ffmpeg }}" = "1" ]; then
-            ls release/libavcodec-*.dll release/libavformat-*.dll >/dev/null
+            ls release/avcodec-*.dll release/avformat-*.dll >/dev/null
           fi
           cd release && zip -r ../openwarcraft3-windows-x64.zip .
 
