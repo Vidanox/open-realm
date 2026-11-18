@@ -85,6 +85,7 @@ static void sound_test_reset(void) {
     sound_test_reads = 0;
     s.initialized = true;
     s.user_volume = 1.0f;
+    s.positional = true;
 }
 
 TEST(sound, mp3_dialogue_loads_into_mono_cache) {
@@ -172,6 +173,27 @@ TEST(sound, user_volume_scales_effects_but_not_music_streams) {
     T_EQ(music[0], music_samples[0]);
     T_EQ(music[1], music_samples[1]);
     s.streams[S_STREAM_MUSIC].data = NULL;
+    sound_test_reset();
+}
+
+TEST(sound, positional_audio_can_be_disabled) {
+    int16_t panned[2] = {0}, flat[2] = {0};
+    vec2_t const listener = { 0.0f, 0.0f };
+    vec2_t const right = { 0.0f, 1.0f };
+    vec3_t const source = { 0.0f, 1000.0f, 0.0f };
+
+    sound_test_reset();
+    S_SetListener(&listener, &right);
+    S_PlaySoundPacket("stereo.wav", &source, true, 0, 1.0f, 0.0f, 0.0f);
+    S_TestMix(panned, 1);
+    T_ASSERT(panned[0] != panned[1]);
+
+    sound_test_reset();
+    S_SetPositionalAudio(false);
+    S_SetListener(&listener, &right);
+    S_PlaySoundPacket("stereo.wav", &source, true, 0, 1.0f, 0.0f, 0.0f);
+    S_TestMix(flat, 1);
+    T_EQ(flat[0], flat[1]);
     sound_test_reset();
 }
 

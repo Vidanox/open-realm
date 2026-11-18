@@ -1587,6 +1587,7 @@ void CL_Frame(uint32_t msec) {
     CL_MusicUpdate();
     S_SetUserVolume(Cvar_Integer("s_sound", 1)
         ? Cvar_Value("s_volume", 1.0f) : 0.0f);
+    S_SetPositionalAudio(Cvar_Integer("s_positional", 1) != 0);
     CL_SendSoundEvents();
     CL_CheckTimeout();
     CL_SendCommand();

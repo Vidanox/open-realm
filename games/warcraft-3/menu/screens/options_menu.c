@@ -43,6 +43,7 @@ static OptionsMenu_t options_menu;
 static optionsPanel_t current_panel = OPTIONS_PANEL_GAMEPLAY;
 static bool sound_controls_initialized;
 static bool sound_enabled_value;
+static bool sound_positional_value;
 static int sound_volume_percent;
 static bool music_controls_initialized;
 static bool music_enabled_value;
@@ -196,13 +197,15 @@ static void OptionsMenu_InitSoundEffectControls(void) {
             (slider_value - min_value) * 100.0f / (max_value - min_value) + 0.5f)));
     } else sound_volume_percent = 100;
     OptionsMenu_SetCheckBox(options_menu.SoundCheckBox, sound_enabled_value);
+    sound_positional_value = OptionsMenu_CvarInteger("s_positional", 1) != 0;
+    OptionsMenu_SetCheckBox(options_menu.PositionalCheckBox, sound_positional_value);
     if (options_menu.SoundVolumeSlider)
         options_menu.SoundVolumeSlider->Slider.InitialValue = slider_value;
     sound_controls_initialized = true;
 }
 
 static void OptionsMenu_RefreshSoundEffectControls(void) {
-    bool enabled;
+    bool enabled, positional_enabled;
     int percent;
     char value[32];
 
@@ -217,6 +220,11 @@ static void OptionsMenu_RefreshSoundEffectControls(void) {
         sound_volume_percent = percent;
         snprintf(value, sizeof(value), "%.2f", (double)percent / 100.0);
         mi.Cvar_Set("s_volume", value);
+    }
+    positional_enabled = OptionsMenu_CheckBoxValue(options_menu.PositionalCheckBox, sound_positional_value);
+    if (positional_enabled != sound_positional_value) {
+        sound_positional_value = positional_enabled;
+        mi.Cvar_Set("s_positional", positional_enabled ? "1" : "0");
     }
 }
 

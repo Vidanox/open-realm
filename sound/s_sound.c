@@ -559,7 +559,7 @@ void S_StopAllSounds(void) {
 #define S_CUTOFF_DIST 3000.0f
 
 static void S_SpatializeChannel(int ch) {
-    if (!s.channels[ch].is_positional) {
+    if (!s.positional || !s.channels[ch].is_positional) {
         s.channels[ch].leftvol = s.channels[ch].rightvol = s.channels[ch].master_vol;
         return;
     }
@@ -703,6 +703,7 @@ bool S_Init(void) {
     web_audio_mutex = SDL_CreateMutex();
     if (!web_audio_mutex) return false;
     s.user_volume = 1.0f;
+    s.positional = true;
     S_LoadSoundEntries();
     s.initialized = true;
     atomic_store(&web_audio_read, 0);
@@ -741,6 +742,7 @@ bool S_Init(void) {
         return false;
     }
     s.user_volume = 1.0f;
+    s.positional = true;
     SDL_PauseAudioDevice(s.device, 0);
     S_LoadSoundEntries();
     s.initialized = true;
@@ -1135,6 +1137,19 @@ void S_SetUserVolume(float volume) {
 #endif
     S_Lock();
     s.user_volume = volume;
+    S_Unlock();
+}
+
+void S_SetPositionalAudio(bool enabled) {
+    if (!s.initialized) return;
+#ifndef __EMSCRIPTEN__
+    if (!s.device) {
+        s.positional = enabled;
+        return;
+    }
+#endif
+    S_Lock();
+    s.positional = enabled;
     S_Unlock();
 }
 

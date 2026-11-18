@@ -60,6 +60,13 @@ jobs:
             fi
           fi
 
+      - name: Sound tests
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          make BUILD=release test-sound
+          ./build/bin/test_sound.exe
+
       - name: Package release archive
         shell: msys2 {0}
         run: |

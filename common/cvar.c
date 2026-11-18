@@ -601,5 +601,6 @@ void Cvar_Init(void) {
     Cvar_GetD("ui_chat_support",  "0",                 CVAR_ARCHIVE, "enable in-game chat UI panel");
     Cvar_GetD("s_sound",          "1",                 CVAR_ARCHIVE | CVAR_UI, "enable game sound effects");
     Cvar_GetD("s_volume",         "1",                 CVAR_ARCHIVE | CVAR_UI, "game sound effects volume: 0.0..1.0");
+    Cvar_GetD("s_positional",     "1",                 CVAR_ARCHIVE | CVAR_UI, "enable positional audio (distance attenuation and stereo pan)");
     Cvar_GetD("s_provider",       "1",                 CVAR_ARCHIVE, "sound backend: 0=none, 1=OpenAL");
 }

@@ -9,6 +9,7 @@ typedef struct { size_t offset; cstring_t cvar; bool slider; } optionsCvarContro
 static optionsCvarControl_t const options_cvar_controls[] = {
     { offsetof(EscMenuOptionsPanel_t, SoundCheckBox),     "s_sound",       false },
     { offsetof(EscMenuOptionsPanel_t, SoundVolumeSlider), "s_volume",      true },
+    { offsetof(EscMenuOptionsPanel_t, PositionalCheckBox), "s_positional", false },
     { offsetof(EscMenuOptionsPanel_t, MusicCheckBox),     "s_music",       false },
     { offsetof(EscMenuOptionsPanel_t, MusicVolumeSlider), "s_musicvolume", true },
 };
@@ -328,7 +329,7 @@ void UI_LoadHudMenu(void) {
         UI_SetEnabled(hud.options.UnitCheckBox, false);
         UI_SetEnabled(hud.options.SubtitlesCheckBox, false);
         UI_SetEnabled(hud.options.EnviroCheckBox, false);
-        UI_SetEnabled(hud.options.PositionalCheckBox, false);
+        UI_SetEnabled(hud.options.PositionalCheckBox, true);
 
         /* DDX-style rows: each control names the client cvar it edits; the client applies it live and
          * Cancel restores the previous values. */
@@ -551,6 +552,7 @@ static void MenuSelectOptionsPanel(menuOptionsPanel_t panel) {
     MenuSetOptionSlider(hud.options.SoundVolumeSlider, "s_volume", 1.0f);
     MenuSetOptionCheckBox(hud.options.MusicCheckBox, "s_music", true);
     MenuSetOptionSlider(hud.options.MusicVolumeSlider, "s_musicvolume", 1.0f);
+    MenuSetOptionCheckBox(hud.options.PositionalCheckBox, "s_positional", true);
 
     if (hud.options.OptionsPanel && hud.options.OptionsPanel->Width > 0.0f &&
         hud.options.OptionsPanel->Height > 0.0f) {
