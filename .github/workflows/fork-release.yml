@@ -4,9 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release tag to create (e.g. v0.0.12-alpha)'
+        description: 'Release tag to create (e.g. v0.0.13-alpha-msaa8)'
         required: true
-        default: 'v0.0.12-alpha'
+        default: 'v0.0.13-alpha-msaa8'
+      msaa:
+        description: 'MSAA sample count (fixed at build time; 0 disables)'
+        type: choice
+        options: ['0', '2', '4', '8']
+        default: '8'
 
 permissions:
   contents: write
@@ -34,7 +39,7 @@ jobs:
 
       - name: Build (Windows release, EOS disabled)
         shell: msys2 {0}
-        run: make BUILD=release build
+        run: make BUILD=release MSAA=${{ inputs.msaa }} build
 
       - name: Package release archive
         shell: msys2 {0}
@@ -50,7 +55,7 @@ jobs:
       - name: Upload CI artifact
         uses: actions/upload-artifact@v4
         with:
-          name: openwarcraft3-windows-x64
+          name: openwarcraft3-windows-x64-msaa${{ inputs.msaa }}
           path: openwarcraft3-windows-x64.zip
 
       - name: Publish GitHub release
@@ -61,5 +66,5 @@ jobs:
           gh release create "${{ inputs.tag }}" openwarcraft3-windows-x64.zip \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
-            --title "OpenRealm ${{ inputs.tag }} (fork build)" \
-            --notes "Windows x64 release build from this fork. EOS/online services disabled; single-player and LAN supported."
+            --title "OpenRealm ${{ inputs.tag }} (fork build, MSAA=${{ inputs.msaa }})" \
+            --notes "Windows x64 release build from this fork. MSAA=${{ inputs.msaa }} (fixed at build time). EOS/online services disabled; single-player and LAN supported."
