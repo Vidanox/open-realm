@@ -70,13 +70,6 @@ jobs:
           cp -r build/share release/
           bash dist-scripts/windows/bundle_mingw_dlls.sh release \
             build/bin/openwarcraft3.exe build/lib/*.dll
-          # FFmpeg's own DLLs pull in a large transitive closure; grow it to a fixed point.
-          for i in 1 2 3 4 5 6 7 8; do
-            before=$(ls release/*.dll | wc -l)
-            bash dist-scripts/windows/bundle_mingw_dlls.sh release release/*.dll build/bin/openwarcraft3.exe
-            after=$(ls release/*.dll | wc -l)
-            [ "$before" = "$after" ] && break
-          done
           if [ "${{ inputs.ffmpeg }}" = "1" ]; then
             ls release/avcodec-*.dll release/avformat-*.dll >/dev/null
           fi
